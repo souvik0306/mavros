@@ -232,7 +232,7 @@ private:
 
 		Eigen::Vector2f angle;
 		Eigen::Vector2f size_rad;
-		Eigen::Vector2f fov;
+		Eigen::Vector2f fov(fox_x, fox_y);
 
 		// the norm of the position vector is considered the distance to the landing target
 		float distance = pos.norm();

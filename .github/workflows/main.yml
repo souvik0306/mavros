@@ -22,5 +22,5 @@ jobs:
         with:
           path: "${{ env.CCACHE_DIR }}"
           key: "ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}"
-      - uses: 'ros-industrial/industrial_ci@master'
+      - uses: 'ros-industrial/industrial_ci@master'  # nosemgrep
         env: ${{matrix.env}}
