@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.21.1 (2025-12-12)
+-------------------
 * Handling empty trajectory message
 * Contributors: Mihir Dharmadhikari
 
