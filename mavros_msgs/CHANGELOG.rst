@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.13.0 (2025-12-12)
+-------------------
 * update packages to format 3
 * regenerate all with cogall.sh, apply ament_uncrustify
 * fixes `#2070 <https://github.com/mavlink/mavros/issues/2070>`_: adding support for OBSTACLE_DISTANCE_3D message (`#2071 <https://github.com/mavlink/mavros/issues/2071>`_)

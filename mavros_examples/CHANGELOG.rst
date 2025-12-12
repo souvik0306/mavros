@@ -2,8 +2,8 @@
 Changelog for package mavros_examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.13.0 (2025-12-12)
+-------------------
 * examples: disable copyright check
 * examples: add copyright headers
 * examples: fix package.xml lint

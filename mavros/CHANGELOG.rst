@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.13.0 (2025-12-12)
+-------------------
 * Uncrustify
 * Fix overflow in uas_timesync.cpp synchronise_stamp
 * Add test for synchronise_stamp overflow
