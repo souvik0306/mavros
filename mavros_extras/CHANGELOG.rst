@@ -2,6 +2,9 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.13.0 (2025-12-12)
 -------------------
 * extras landing_target: fix `#2080 <https://github.com/mavlink/mavros/issues/2080>`_ fov vector init
