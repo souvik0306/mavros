@@ -108,7 +108,6 @@ void Router::add_endpoint(
   const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
   mavros_msgs::srv::EndpointAdd::Response::SharedPtr response)
 {
-  unique_lock lock(mu);
   auto lg = get_logger();
 
   RCLCPP_INFO(
@@ -139,7 +138,10 @@ void Router::add_endpoint(
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
 
-  this->endpoints[id] = ep;
+  {
+    unique_lock lock(mu);
+    this->endpoints[id] = ep;
+  }
   this->diagnostic_updater.add(ep->diag_name(), std::bind(&Endpoint::diag_run, ep, _1));
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
@@ -159,17 +161,25 @@ void Router::del_endpoint(
   const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
   mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
 {
-  unique_lock lock(mu);
   auto lg = get_logger();
+  Endpoint::SharedPtr endpoint_to_remove;
+  std::string endpoint_diag_name;
 
   if (request->id != 0) {
     RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
-    auto it = this->endpoints.find(request->id);
-    if (it != this->endpoints.end() ) {
-      it->second->close();
-      this->diagnostic_updater.removeByName(it->second->diag_name());
-      this->endpoints.erase(it);
-      response->successful = true;
+    {
+      unique_lock lock(mu);
+      auto it = this->endpoints.find(request->id);
+      if (it != this->endpoints.end() ) {
+        endpoint_to_remove = it->second;
+        endpoint_diag_name = it->second->diag_name();
+        this->endpoints.erase(it);
+        response->successful = true;
+      }
+    }
+    if (endpoint_to_remove) {
+      endpoint_to_remove->close();
+      this->diagnostic_updater.removeByName(endpoint_diag_name);
     }
     return;
   }
@@ -177,16 +187,23 @@ void Router::del_endpoint(
   RCLCPP_INFO(
     lg, "Requested to del endpoint type: %d url: %s", request->type,
     request->url.c_str());
-  for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
-    if (it->second->url == request->url &&
-      it->second->link_type == static_cast<Endpoint::Type>( request->type))
-    {
-      it->second->close();
-      this->diagnostic_updater.removeByName(it->second->diag_name());
-      this->endpoints.erase(it);
-      response->successful = true;
-      return;
+  {
+    unique_lock lock(mu);
+    for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
+      if (it->second->url == request->url &&
+        it->second->link_type == static_cast<Endpoint::Type>(request->type))
+      {
+        endpoint_to_remove = it->second;
+        endpoint_diag_name = it->second->diag_name();
+        this->endpoints.erase(it);
+        response->successful = true;
+        break;
+      }
     }
+  }
+  if (endpoint_to_remove) {
+    endpoint_to_remove->close();
+    this->diagnostic_updater.removeByName(endpoint_diag_name);
   }
 }
 
