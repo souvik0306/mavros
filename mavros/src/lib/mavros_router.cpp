@@ -403,6 +403,11 @@ bool MAVConnEndpoint::is_open()
 
 std::pair<bool, std::string> MAVConnEndpoint::open()
 {
+  auto nh = this->parent;
+  if (!nh) {
+    return {false, "parent not set"};
+  }
+
   try {
     auto weak_self = weak_from_this();
     this->link = mavconn::MAVConnInterface::open_url(
@@ -411,7 +416,9 @@ std::pair<bool, std::string> MAVConnEndpoint::open()
         if (auto self = weak_self.lock()) {
           self->recv_message(msg, framing);
         }
-      });
+      },
+      mavconn::MAVConnInterface::ClosedCb(),
+      nh->get_shared_io());
   } catch (mavconn::DeviceError & ex) {
     return {false, ex.what()};
   }
