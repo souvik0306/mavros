@@ -37,7 +37,6 @@ void Router::route_message(
   Endpoint::SharedPtr src, const mavlink_message_t * msg,
   const Framing framing)
 {
-  shared_lock lock(mu);
   this->stat_msg_routed++;
 
   // find message destination target
@@ -52,35 +51,42 @@ void Router::route_message(
     }
   }
 
-  size_t sent_cnt = 0, retry_cnt = 0;
-retry:
-  for (auto & kv : this->endpoints) {
-    auto & dest = kv.second;
+  auto collect_targets = [this, &src](addr_t addr) {
+      std::vector<Endpoint::SharedPtr> targets;
+      shared_lock lock(mu);
+      targets.reserve(this->endpoints.size());
 
-    if (src->id == dest->id) {
-      continue;     // do not echo message
-    }
-    if (src->link_type == dest->link_type) {
-      continue;     // drop messages between same type FCU/GCS/UAS
-    }
+      for (const auto & kv : this->endpoints) {
+        const auto & dest = kv.second;
 
-    // NOTE(vooon): current router do not allow to speak drone-to-drone.
-    //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
+        if (src->id == dest->id) {
+          continue;     // do not echo message
+        }
+        if (src->link_type == dest->link_type) {
+          continue;     // drop messages between same type FCU/GCS/UAS
+        }
 
-    bool has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
+        // NOTE(vooon): current router do not allow to speak drone-to-drone.
+        //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
+        if (dest->remote_addrs.find(addr) != dest->remote_addrs.end()) {
+          targets.emplace_back(dest);
+        }
+      }
 
-    if (has_target) {
-      dest->send_message(msg, framing, src->id);
-      sent_cnt++;
-    }
-  }
+      return targets;
+    };
 
-  // if message haven't been sent retry broadcast it
-  if (sent_cnt == 0 && retry_cnt < 2) {
+  auto targets = collect_targets(target_addr);
+  if (targets.empty() && target_addr != 0) {
+    // if targeted message hasn't been sent, retry as broadcast
     target_addr = 0;
-    retry_cnt++;
-    goto retry;
+    targets = collect_targets(target_addr);
   }
+
+  for (const auto & dest : targets) {
+    dest->send_message(msg, framing, src->id);
+  }
+  const auto sent_cnt = targets.size();
 
   // update stats
   this->stat_msg_sent.fetch_add(sent_cnt);
