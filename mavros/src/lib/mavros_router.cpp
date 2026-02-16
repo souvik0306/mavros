@@ -67,7 +67,8 @@ void Router::route_message(
         }
 
         // NOTE(vooon): current router do not allow to speak drone-to-drone.
-        //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
+        //              if needed, perhaps better to add mavlink-router in front of
+        //              mavros-router.
         if (dest->remote_addrs.find(addr) != dest->remote_addrs.end()) {
           targets.emplace_back(dest);
         }
