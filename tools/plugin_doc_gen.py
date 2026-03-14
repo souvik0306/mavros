@@ -380,8 +380,8 @@ def render_plugin_markdown_with_template(
         raise RuntimeError(
             "Jinja2 is required for templated markdown output. Install dependencies with `uv sync`."
         )
-    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     # This renderer is used only for offline docs generation, not for request/response HTML.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     env = Environment(loader=FileSystemLoader(str(template_path.parent)), autoescape=False)
     template = env.get_template(template_path.name)
     try:
