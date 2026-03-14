@@ -219,7 +219,7 @@ Protocol MAVConnInterface::get_protocol_version()
 uint64_t MAVConnInterface::default_signing_timestamp()
 {
   constexpr auto mavlink_signing_epoch = std::chrono::sys_days {std::chrono::year(2015) /
-      std::chrono::January / 1};
+    std::chrono::January / 1};
   auto now = std::chrono::system_clock::now();
   if (now < mavlink_signing_epoch) {
     now = mavlink_signing_epoch;

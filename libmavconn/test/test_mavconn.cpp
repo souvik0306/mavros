@@ -193,7 +193,7 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
     44, 200, "0.0.0.0", 45023, "localhost", 45022, &shared_io);
   client->connect(
     [&](const mavlink_message_t * message [[maybe_unused]],
-      const Framing framing [[maybe_unused]])
+    const Framing framing [[maybe_unused]])
     {
       std::lock_guard<std::mutex> lock(mutex);
       got_echo = true;
@@ -210,9 +210,9 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
   echo->close();
 
   shared_io.post([&]() {
-    std::lock_guard<std::mutex> lock(mutex);
-    posted_done = true;
-    cond.notify_all();
+      std::lock_guard<std::mutex> lock(mutex);
+      posted_done = true;
+      cond.notify_all();
   });
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -241,7 +241,7 @@ TEST(IO_THREAD, udp_close_from_callback_does_not_deadlock)
     44, 200, "0.0.0.0", 45033, "localhost", 45032);
   client->connect(
     [&](const mavlink_message_t * message [[maybe_unused]],
-      const Framing framing [[maybe_unused]])
+    const Framing framing [[maybe_unused]])
     {
       client->close();
       std::lock_guard<std::mutex> lock(mutex);

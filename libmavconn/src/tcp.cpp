@@ -547,8 +547,8 @@ void MAVConnTCPServer::do_accept()
 
         acceptor_client->message_received_cb = sthis->message_received_cb;
         acceptor_client->port_closed_cb = [weak_client, sthis]() {
-            sthis->client_closed(weak_client);
-          };
+          sthis->client_closed(weak_client);
+        };
 
         sthis->client_list.push_back(acceptor_client);
       }

@@ -20,7 +20,8 @@
 
 namespace fs = std::filesystem;
 
-struct ApiEntry {
+struct ApiEntry
+{
   std::string name;
   std::string type_name;
   int line = 0;
@@ -28,7 +29,8 @@ struct ApiEntry {
   std::string description;
 };
 
-struct MavlinkSubEntry {
+struct MavlinkSubEntry
+{
   std::string handler;
   std::string message_type;
   std::string message_name;
@@ -39,7 +41,8 @@ struct MavlinkSubEntry {
   std::string description;
 };
 
-struct MavlinkPubEntry {
+struct MavlinkPubEntry
+{
   std::string argument;
   std::string message_type;
   std::string message_name;
@@ -50,7 +53,8 @@ struct MavlinkPubEntry {
   std::string description;
 };
 
-struct PluginApi {
+struct PluginApi
+{
   std::string plugin;
   fs::path path;
   std::string class_name;
@@ -66,7 +70,8 @@ struct PluginApi {
   std::vector<MavlinkPubEntry> mavlink_publications;
 };
 
-struct Config {
+struct Config
+{
   std::vector<fs::path> plugin_dirs;
   std::set<std::string> plugin_filter;
   fs::path output;
@@ -145,7 +150,7 @@ static const std::regex kIdentifierRe(
 
 std::string trim(std::string s)
 {
-  auto not_space = [](unsigned char c) { return !std::isspace(c); };
+  auto not_space = [](unsigned char c) {return !std::isspace(c);};
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
   s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
   return s;
@@ -153,7 +158,7 @@ std::string trim(std::string s)
 
 std::string to_upper(std::string s)
 {
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {return std::toupper(c);});
   return s;
 }
 
@@ -186,12 +191,12 @@ std::string resolve_symbol(std::string raw, const std::map<std::string, std::str
 std::string infer_param_type(const std::string & default_expr)
 {
   const std::string expr = trim(default_expr);
-  if (expr.empty()) return "";
-  if (std::regex_match(expr, std::regex(R"(true|false)"))) return "bool";
+  if (expr.empty()) {return "";}
+  if (std::regex_match(expr, std::regex(R"(true|false)"))) {return "bool";}
   if (expr.find('"') != std::string::npos || expr.find("std::string") != std::string::npos) {
     return "string";
   }
-  if (std::regex_match(expr, std::regex(R"([-+]?\d+)"))) return "integer";
+  if (std::regex_match(expr, std::regex(R"([-+]?\d+)"))) {return "integer";}
   if (std::regex_match(expr, std::regex(R"([-+]?\d*\.\d+(?:[eE][-+]?\d+)?[fFlL]?)")) ||
     std::regex_match(expr, std::regex(R"([-+]?\d+[eE][-+]?\d+[fFlL]?)")))
   {
@@ -205,7 +210,8 @@ std::string infer_param_type(const std::string & default_expr)
 
 int line_for_offset(const std::string & text, size_t offset)
 {
-  return static_cast<int>(1 + std::count(text.begin(), text.begin() + std::min(offset, text.size()), '\n'));
+  return static_cast<int>(1 + std::count(text.begin(), text.begin() + std::min(offset, text.size()),
+    '\n'));
 }
 
 std::string read_file(const fs::path & path)
@@ -218,7 +224,7 @@ std::string read_file(const fs::path & path)
 
 std::string read_file_if_exists(const fs::path & path)
 {
-  if (!fs::exists(path) || !fs::is_regular_file(path)) return "";
+  if (!fs::exists(path) || !fs::is_regular_file(path)) {return "";}
   return read_file(path);
 }
 
@@ -239,14 +245,15 @@ std::vector<std::string> split_lines(const std::string & text)
 std::string strip_comment_markers(std::string line)
 {
   line = trim(std::move(line));
-  if (line.rfind("///", 0) == 0) return trim(line.substr(3));
-  if (line.rfind("//!", 0) == 0) return trim(line.substr(3));
-  if (line.rfind("//", 0) == 0) return trim(line.substr(2));
-  if (line.rfind("/**", 0) == 0) line = line.substr(3);
-  else if (line.rfind("/*", 0) == 0) line = line.substr(2);
-  if (!line.empty() && line.back() == '/') line.pop_back();
+  if (line.rfind("///", 0) == 0) {return trim(line.substr(3));}
+  if (line.rfind("//!", 0) == 0) {return trim(line.substr(3));}
+  if (line.rfind("//", 0) == 0) {return trim(line.substr(2));}
+  if (line.rfind("/**", 0) == 0) {line = line.substr(3);} else if (line.rfind("/*", 0) == 0) {
+    line = line.substr(2);
+  }
+  if (!line.empty() && line.back() == '/') {line.pop_back();}
   line = trim(line);
-  if (!line.empty() && line[0] == '*') line = trim(line.substr(1));
+  if (!line.empty() && line[0] == '*') {line = trim(line.substr(1));}
   if (line.size() >= 2 && line.substr(line.size() - 2) == "*/") {
     line = trim(line.substr(0, line.size() - 2));
   }
@@ -259,12 +266,12 @@ std::string strip_comment_markers(std::string line)
 
 std::string extract_entry_comment(const std::vector<std::string> & lines, int line_1based)
 {
-  if (line_1based <= 0 || static_cast<size_t>(line_1based) > lines.size()) return "";
+  if (line_1based <= 0 || static_cast<size_t>(line_1based) > lines.size()) {return "";}
   const std::string line = lines[static_cast<size_t>(line_1based - 1)];
 
   if (const size_t cpos = line.find("//"); cpos != std::string::npos) {
     const std::string inline_comment = strip_comment_markers(line.substr(cpos));
-    if (!inline_comment.empty()) return inline_comment;
+    if (!inline_comment.empty()) {return inline_comment;}
   }
 
   std::vector<std::string> parts;
@@ -275,7 +282,7 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
 
     if (t.empty()) {
       if (parts.empty()) {
-        if (++blank_lines > 1) break;
+        if (++blank_lines > 1) {break;}
         continue;
       }
       break;
@@ -303,7 +310,7 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
         for (int i = 0; i < 20 && start >= 0; ++i, --start) {
           const std::string bt = trim(lines[static_cast<size_t>(start)]);
           block_parts.push_back(strip_comment_markers(bt));
-          if (bt.find("/*") != std::string::npos) break;
+          if (bt.find("/*") != std::string::npos) {break;}
         }
         std::reverse(block_parts.begin(), block_parts.end());
 
@@ -313,11 +320,11 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
         bool has_brief = false;
         for (const auto & p : block_parts) {
           const std::string t = trim(p);
-          if (t.empty()) continue;
+          if (t.empty()) {continue;}
           if (t.rfind("@brief", 0) == 0) {
             const std::string brief = trim(t.substr(6));
             if (!brief.empty()) {
-              if (!block.empty()) block += " ";
+              if (!block.empty()) {block += " ";}
               block += brief;
               ++block_lines;
               has_brief = true;
@@ -334,7 +341,7 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
             has_bad = true;
           }
           ++block_lines;
-          if (!block.empty()) block += " ";
+          if (!block.empty()) {block += " ";}
           block += t;
         }
 
@@ -349,9 +356,9 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
   std::string out;
   for (const auto & p : parts) {
     const std::string t = trim(p);
-    if (t.empty()) continue;
-    if (t.find("[[[end]]]") != std::string::npos) continue;
-    if (!out.empty()) out += " ";
+    if (t.empty()) {continue;}
+    if (t.find("[[[end]]]") != std::string::npos) {continue;}
+    if (!out.empty()) {out += " ";}
     out += t;
   }
   return trim(out);
@@ -360,9 +367,9 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
 void dedup_entries(std::vector<ApiEntry> & entries)
 {
   std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-    if (a.line != b.line) return a.line < b.line;
-    if (a.name != b.name) return a.name < b.name;
-    return a.type_name < b.type_name;
+      if (a.line != b.line) {return a.line < b.line;}
+      if (a.name != b.name) {return a.name < b.name;}
+      return a.type_name < b.type_name;
   });
   entries.erase(
     std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
@@ -374,13 +381,14 @@ void dedup_entries(std::vector<ApiEntry> & entries)
 void dedup_mavlink_entries(std::vector<MavlinkSubEntry> & entries)
 {
   std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-    if (a.line != b.line) return a.line < b.line;
-    if (a.handler != b.handler) return a.handler < b.handler;
-    return a.message_type < b.message_type;
+      if (a.line != b.line) {return a.line < b.line;}
+      if (a.handler != b.handler) {return a.handler < b.handler;}
+      return a.message_type < b.message_type;
   });
   entries.erase(
     std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      return a.handler == b.handler && a.message_type == b.message_type && a.msg_id_expr == b.msg_id_expr;
+      return a.handler == b.handler && a.message_type == b.message_type &&
+             a.msg_id_expr == b.msg_id_expr;
     }),
     entries.end());
 }
@@ -388,9 +396,9 @@ void dedup_mavlink_entries(std::vector<MavlinkSubEntry> & entries)
 void dedup_mavlink_publications(std::vector<MavlinkPubEntry> & entries)
 {
   std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-    if (a.line != b.line) return a.line < b.line;
-    if (a.message_type != b.message_type) return a.message_type < b.message_type;
-    return a.argument < b.argument;
+      if (a.line != b.line) {return a.line < b.line;}
+      if (a.message_type != b.message_type) {return a.message_type < b.message_type;}
+      return a.argument < b.argument;
   });
   entries.erase(
     std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
@@ -427,7 +435,7 @@ std::string clean_description(const std::string & block)
     if (line.empty() || line.rfind("@plugin", 0) == 0 || line.rfind("@brief", 0) == 0) {
       continue;
     }
-    if (!first) out << " ";
+    if (!first) {out << " ";}
     out << line;
     first = false;
   }
@@ -461,7 +469,7 @@ void extract_entries(
     const size_t pos = static_cast<size_t>(m.position());
     e.line = line_for_offset(text, pos);
     e.description = extract_entry_comment(lines, e.line);
-    if (!e.name.empty()) out.push_back(std::move(e));
+    if (!e.name.empty()) {out.push_back(std::move(e));}
   }
 }
 
@@ -470,7 +478,9 @@ void extract_parameters(
   const std::vector<std::string> & lines,
   std::vector<ApiEntry> & out)
 {
-  for (std::sregex_iterator it(text.begin(), text.end(), kParamWatchDefaultRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kParamWatchDefaultRe), end; it != end;
+    ++it)
+  {
     ApiEntry e;
     e.name = (*it)[1].str();
     e.default_value = trim((*it)[2].str());
@@ -480,7 +490,9 @@ void extract_parameters(
     e.description = extract_entry_comment(lines, e.line);
     out.push_back(std::move(e));
   }
-  for (std::sregex_iterator it(text.begin(), text.end(), kParamDeclareDefaultRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kParamDeclareDefaultRe), end; it != end;
+    ++it)
+  {
     ApiEntry e;
     e.name = (*it)[1].str();
     e.default_value = trim((*it)[2].str());
@@ -504,10 +516,14 @@ std::map<std::string, std::string> extract_handler_types(const std::string & tex
   }
 
   std::map<std::string, std::string> alias_types;
-  for (std::sregex_iterator it(text.begin(), text.end(), kUsingAliasMavlinkTypeRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kUsingAliasMavlinkTypeRe), end; it != end;
+    ++it)
+  {
     alias_types[(*it)[1].str()] = trim((*it)[2].str());
   }
-  for (std::sregex_iterator it(text.begin(), text.end(), kUsingImportedMavlinkTypeRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kUsingImportedMavlinkTypeRe), end;
+    it != end; ++it)
+  {
     alias_types[(*it)[2].str()] = trim((*it)[1].str());
   }
 
@@ -564,26 +580,26 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
 {
   std::map<std::string, int> out;
   for (const auto & root : candidate_mavlink_roots(repo_root)) {
-    if (!fs::exists(root) || !fs::is_directory(root)) continue;
+    if (!fs::exists(root) || !fs::is_directory(root)) {continue;}
     for (const auto & dialect_ent : fs::directory_iterator(root)) {
-      if (!dialect_ent.is_directory()) continue;
+      if (!dialect_ent.is_directory()) {continue;}
       const std::string dialect = dialect_ent.path().filename().string();
       for (const auto & ent : fs::directory_iterator(dialect_ent.path())) {
-        if (!ent.is_regular_file()) continue;
+        if (!ent.is_regular_file()) {continue;}
         const auto ext = ent.path().extension().string();
-        if (ext != ".hpp" && ext != ".h") continue;
+        if (ext != ".hpp" && ext != ".h") {continue;}
         const std::string fname = ent.path().filename().string();
         const std::string prefix = "mavlink_msg_";
-        if (fname.rfind(prefix, 0) != 0) continue;
+        if (fname.rfind(prefix, 0) != 0) {continue;}
         auto suffix_pos = fname.rfind(".hpp");
         if (suffix_pos == std::string::npos) {
           suffix_pos = fname.rfind(".h");
         }
-        if (suffix_pos == std::string::npos || suffix_pos <= prefix.size()) continue;
+        if (suffix_pos == std::string::npos || suffix_pos <= prefix.size()) {continue;}
         const std::string msg_snake = fname.substr(prefix.size(), suffix_pos - prefix.size());
         std::string msg_upper = msg_snake;
         std::transform(msg_upper.begin(), msg_upper.end(), msg_upper.begin(), [](unsigned char c) {
-          return c == '-' ? '_' : std::toupper(c);
+            return c == '-' ? '_' : std::toupper(c);
         });
 
         const std::string text = read_file(ent.path());
@@ -601,7 +617,7 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
         out[dialect + "::" + msg_upper] = id;
       }
     }
-    if (!out.empty()) break;
+    if (!out.empty()) {break;}
   }
   return out;
 }
@@ -610,8 +626,8 @@ void resolve_mavlink_meta(MavlinkSubEntry & e, const std::map<std::string, int> 
 {
   if (!e.message_type.empty()) {
     const auto [dialect, msg_name] = split_mavlink_type(e.message_type);
-    if (!dialect.empty()) e.dialect = dialect;
-    if (!msg_name.empty() && e.message_name.empty()) e.message_name = msg_name;
+    if (!dialect.empty()) {e.dialect = dialect;}
+    if (!msg_name.empty() && e.message_name.empty()) {e.message_name = msg_name;}
   }
 
   if (e.msg_id < 0 && !e.msg_id_expr.empty()) {
@@ -622,8 +638,8 @@ void resolve_mavlink_meta(MavlinkSubEntry & e, const std::map<std::string, int> 
       std::smatch idm;
       if (std::regex_search(ex, idm, kMsgIdExprTypeRe)) {
         const auto [dialect, msg_name] = split_mavlink_type(idm[1].str());
-        if (e.dialect.empty()) e.dialect = dialect;
-        if (e.message_name.empty()) e.message_name = msg_name;
+        if (e.dialect.empty()) {e.dialect = dialect;}
+        if (e.message_name.empty()) {e.message_name = msg_name;}
       }
     }
   }
@@ -640,8 +656,8 @@ void resolve_mavlink_meta(MavlinkPubEntry & e, const std::map<std::string, int> 
 {
   if (!e.message_type.empty()) {
     const auto [dialect, msg_name] = split_mavlink_type(e.message_type);
-    if (!dialect.empty()) e.dialect = dialect;
-    if (!msg_name.empty() && e.message_name.empty()) e.message_name = msg_name;
+    if (!dialect.empty()) {e.dialect = dialect;}
+    if (!msg_name.empty() && e.message_name.empty()) {e.message_name = msg_name;}
   }
 
   if (e.msg_id < 0 && !e.msg_id_expr.empty()) {
@@ -652,8 +668,8 @@ void resolve_mavlink_meta(MavlinkPubEntry & e, const std::map<std::string, int> 
       std::smatch idm;
       if (std::regex_search(ex, idm, kMsgIdExprTypeRe)) {
         const auto [dialect, msg_name] = split_mavlink_type(idm[1].str());
-        if (e.dialect.empty()) e.dialect = dialect;
-        if (e.message_name.empty()) e.message_name = msg_name;
+        if (e.dialect.empty()) {e.dialect = dialect;}
+        if (e.message_name.empty()) {e.message_name = msg_name;}
       }
     }
   }
@@ -691,19 +707,26 @@ std::map<std::string, std::vector<std::pair<int, std::string>>> extract_mavlink_
     out[var_name].emplace_back(line, type_name);
   }
 
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoLambdaMavlinkDeclRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kAutoLambdaMavlinkDeclRe), end; it != end;
+    ++it)
+  {
     const auto var_name = (*it)[1].str();
     const auto type_name = trim((*it)[2].str());
     const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
     out[var_name].emplace_back(line, type_name);
   }
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoMavlinkDirectDeclRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kAutoMavlinkDirectDeclRe), end; it != end;
+    ++it)
+  {
     const auto var_name = (*it)[1].str();
     const auto type_name = trim((*it)[2].str());
     const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
     out[var_name].emplace_back(line, type_name);
   }
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoTemplateMavlinkDeclRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kAutoTemplateMavlinkDeclRe),
+    end; it != end;
+    ++it)
+  {
     const auto var_name = (*it)[1].str();
     const auto type_name = trim((*it)[2].str());
     const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
@@ -712,7 +735,7 @@ std::map<std::string, std::vector<std::pair<int, std::string>>> extract_mavlink_
 
   for (auto & kv : out) {
     auto & v = kv.second;
-    std::sort(v.begin(), v.end(), [](const auto & a, const auto & b) { return a.first < b.first; });
+    std::sort(v.begin(), v.end(), [](const auto & a, const auto & b) {return a.first < b.first;});
   }
 
   return out;
@@ -723,11 +746,11 @@ std::vector<std::pair<int, std::string>> extract_mavlink_class_bases(const std::
   std::vector<std::pair<int, std::string>> out;
   for (std::sregex_iterator it(text.begin(), text.end(), kClassInheritRe), end; it != end; ++it) {
     const std::string base = trim((*it)[2].str());
-    if (base.rfind("mavlink::", 0) != 0) continue;
+    if (base.rfind("mavlink::", 0) != 0) {continue;}
     const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
     out.emplace_back(line, base);
   }
-  std::sort(out.begin(), out.end(), [](const auto & a, const auto & b) { return a.first < b.first; });
+  std::sort(out.begin(), out.end(), [](const auto & a, const auto & b) {return a.first < b.first;});
   return out;
 }
 
@@ -736,7 +759,7 @@ std::string resolve_type_from_var_decls(
   const std::string & var_name, int at_line)
 {
   const auto it = decls.find(var_name);
-  if (it == decls.end()) return "";
+  if (it == decls.end()) {return "";}
   const auto & vec = it->second;
   std::string best;
   int best_line = -1;
@@ -826,7 +849,9 @@ void extract_mavlink_subscriptions(
     out.push_back(std::move(e));
   }
 
-  for (std::sregex_iterator it(text.begin(), text.end(), kMakeHandlerTypedRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kMakeHandlerTypedRe), end; it != end;
+    ++it)
+  {
     MavlinkSubEntry e;
     e.handler = (*it)[1].str();
     if (auto p = handler_types.find(e.handler); p != handler_types.end()) {
@@ -849,7 +874,7 @@ void extract_mavlink_from_context(
   std::vector<MavlinkSubEntry> * out_subs, std::vector<MavlinkPubEntry> * out_pubs)
 {
   const std::string text = read_file_if_exists(path);
-  if (text.empty()) return;
+  if (text.empty()) {return;}
   const auto lines = split_lines(text);
   if (out_subs != nullptr) {
     extract_mavlink_subscriptions(text, lines, msgid_index, *out_subs);
@@ -874,9 +899,9 @@ void apply_missionbase_subscription_fallback(
   };
 
   for (auto & e : subs) {
-    if (!e.message_type.empty()) continue;
+    if (!e.message_type.empty()) {continue;}
     const auto it = kHandlerType.find(e.handler);
-    if (it == kHandlerType.end()) continue;
+    if (it == kHandlerType.end()) {continue;}
     e.message_type = it->second;
     e.message_name = tail_name(e.message_type);
     e.msg_id_expr = e.message_type + "::MSG_ID";
@@ -894,17 +919,17 @@ void apply_missionbase_publication_fallback(
       break;
     }
   }
-  if (!has_unknown_wpi) return;
+  if (!has_unknown_wpi) {return;}
 
   auto add_pub = [&](const std::string & message_type, const std::string & argument) {
-    MavlinkPubEntry e;
-    e.argument = argument;
-    e.message_type = message_type;
-    e.message_name = tail_name(message_type);
-    e.msg_id_expr = message_type + "::MSG_ID";
-    resolve_mavlink_meta(e, msgid_index);
-    pubs.push_back(std::move(e));
-  };
+      MavlinkPubEntry e;
+      e.argument = argument;
+      e.message_type = message_type;
+      e.message_name = tail_name(message_type);
+      e.msg_id_expr = message_type + "::MSG_ID";
+      resolve_mavlink_meta(e, msgid_index);
+      pubs.push_back(std::move(e));
+    };
 
   add_pub("mavlink::common::msg::MISSION_ITEM", "wpi");
   add_pub("mavlink::common::msg::MISSION_ITEM_INT", "wpi");
@@ -947,7 +972,9 @@ std::set<std::string> detect_setpoint_mixin_messages(const std::string & text)
   static const std::regex kSetpointMixinBaseRe(
     R"(plugin::(SetPositionTargetLocalNEDMixin|SetPositionTargetGlobalIntMixin|SetAttitudeTargetMixin)\s*<)");
 
-  for (std::sregex_iterator it(text.begin(), text.end(), kSetpointMixinBaseRe), end; it != end; ++it) {
+  for (std::sregex_iterator it(text.begin(), text.end(), kSetpointMixinBaseRe), end; it != end;
+    ++it)
+  {
     const std::string mixin = (*it)[1].str();
     if (mixin == "SetPositionTargetLocalNEDMixin") {
       out.insert("SET_POSITION_TARGET_LOCAL_NED");
@@ -974,13 +1001,13 @@ PluginApi parse_plugin(
     return api;
   }
   std::smatch m;
-  if (std::regex_search(plugin_block, m, kPluginNameRe)) api.plugin = m[1].str();
-  if (api.plugin.empty()) return PluginApi{};
-  if (std::regex_search(plugin_block, m, kPluginBriefRe)) api.brief = trim(m[1].str());
+  if (std::regex_search(plugin_block, m, kPluginNameRe)) {api.plugin = m[1].str();}
+  if (api.plugin.empty()) {return PluginApi{}}
+  if (std::regex_search(plugin_block, m, kPluginBriefRe)) {api.brief = trim(m[1].str());}
   api.description = clean_description(plugin_block);
 
-  if (std::regex_search(text, m, kRegisterPluginRe)) api.class_name = trim(m[1].str());
-  if (std::regex_search(text, m, kPluginNsRe)) api.ns = trim(m[1].str());
+  if (std::regex_search(text, m, kRegisterPluginRe)) {api.class_name = trim(m[1].str());}
+  if (std::regex_search(text, m, kPluginNsRe)) {api.ns = trim(m[1].str());}
 
   extract_entries(text, kPublisherRe, true, symbols, lines, api.publishers);
   extract_entries(text, kSubscriptionRe, true, symbols, lines, api.subscribers);
@@ -1000,8 +1027,12 @@ PluginApi parse_plugin(
     extract_mavlink_from_context(
       repo_root / "mavros/src/plugins/mission_protocol_base.cpp",
       msgid_index, nullptr, &mission_pubs);
-    for (auto & e : mission_subs) api.mavlink_subscriptions.push_back(std::move(e));
-    for (auto & e : mission_pubs) api.mavlink_publications.push_back(std::move(e));
+    for (auto & e : mission_subs) {
+      api.mavlink_subscriptions.push_back(std::move(e));
+    }
+    for (auto & e : mission_pubs) {
+      api.mavlink_publications.push_back(std::move(e));
+    }
     dedup_mavlink_entries(api.mavlink_subscriptions);
     dedup_mavlink_publications(api.mavlink_publications);
     apply_missionbase_subscription_fallback(api.mavlink_subscriptions, msgid_index);
@@ -1044,11 +1075,11 @@ PluginApi parse_plugin(
     ApiEntry e;
     const auto var = (*it)[1].str();
     e.name = resolve_symbol((*it)[2].str(), symbols);
-    if (auto p = mf_types.find(var); p != mf_types.end()) e.type_name = p->second;
+    if (auto p = mf_types.find(var); p != mf_types.end()) {e.type_name = p->second;}
     const size_t pos = static_cast<size_t>((*it).position());
     e.line = line_for_offset(text, pos);
     e.description = extract_entry_comment(lines, e.line);
-    if (!e.name.empty()) api.subscribers.push_back(std::move(e));
+    if (!e.name.empty()) {api.subscribers.push_back(std::move(e));}
   }
 
   dedup_entries(api.publishers);
@@ -1166,11 +1197,15 @@ Config parse_args(int argc, char ** argv)
   Config cfg;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
-    if (a == "--plugin-dir" && i + 1 < argc) cfg.plugin_dirs.emplace_back(argv[++i]);
-    else if (a == "--plugin" && i + 1 < argc) cfg.plugin_filter.insert(argv[++i]);
-    else if (a == "--output" && i + 1 < argc) cfg.output = argv[++i];
-    else if (a == "--jobs" && i + 1 < argc) cfg.jobs = std::max(1, std::stoi(argv[++i]));
-    else if (a == "--help") {
+    if (a == "--plugin-dir" && i + 1 < argc) {
+      cfg.plugin_dirs.emplace_back(argv[++i]);
+    } else if (a == "--plugin" && i + 1 < argc) {
+      cfg.plugin_filter.insert(argv[++i]);
+    } else if (a == "--output" && i + 1 < argc) {
+      cfg.output = argv[++i];
+    } else if (a == "--jobs" && i + 1 < argc) {
+      cfg.jobs = std::max(1, std::stoi(argv[++i]));
+    } else if (a == "--help") {
       std::cout
         << "Usage: plugin_doc_gen_cpp [--plugin-dir DIR] [--plugin NAME] [--jobs N] --output FILE\n";
       std::exit(0);
@@ -1179,7 +1214,7 @@ Config parse_args(int argc, char ** argv)
   if (cfg.plugin_dirs.empty()) {
     cfg.plugin_dirs = {fs::path("mavros/src/plugins"), fs::path("mavros_extras/src/plugins")};
   }
-  if (cfg.output.empty()) cfg.output = "plugin_api.json";
+  if (cfg.output.empty()) {cfg.output = "plugin_api.json";}
   return cfg;
 }
 
@@ -1190,7 +1225,7 @@ fs::path detect_repo_root()
     if (fs::exists(p / "mavros/src/plugins") && fs::exists(p / "mavros_extras/src/plugins")) {
       return p;
     }
-    if (p == p.root_path()) break;
+    if (p == p.root_path()) {break;}
   }
   return cwd;
 }
@@ -1204,14 +1239,14 @@ int main(int argc, char ** argv)
   std::vector<fs::path> files;
   for (const auto & dir : cfg.plugin_dirs) {
     const fs::path abs_dir = dir.is_absolute() ? dir : repo_root / dir;
-    if (!fs::exists(abs_dir)) continue;
+    if (!fs::exists(abs_dir)) {continue;}
     for (const auto & ent : fs::directory_iterator(abs_dir)) {
-      if (!ent.is_regular_file() || ent.path().extension() != ".cpp") continue;
+      if (!ent.is_regular_file() || ent.path().extension() != ".cpp") {continue;}
       auto text = read_file(ent.path());
       std::smatch m;
-      if (!std::regex_search(text, m, kPluginNameRe)) continue;
+      if (!std::regex_search(text, m, kPluginNameRe)) {continue;}
       const std::string plugin = m[1].str();
-      if (!cfg.plugin_filter.empty() && !cfg.plugin_filter.count(plugin)) continue;
+      if (!cfg.plugin_filter.empty() && !cfg.plugin_filter.count(plugin)) {continue;}
       files.push_back(ent.path());
     }
   }
@@ -1222,25 +1257,28 @@ int main(int argc, char ** argv)
   std::mutex out_mtx;
   std::atomic<size_t> index{0};
 
-  const int jobs = std::max(1, std::min(cfg.jobs, static_cast<int>(files.size() ? files.size() : 1)));
+  const int jobs = std::max(1,
+    std::min(cfg.jobs, static_cast<int>(files.size() ? files.size() : 1)));
   std::vector<std::thread> workers;
   workers.reserve(jobs);
   for (int i = 0; i < jobs; ++i) {
     workers.emplace_back([&]() {
-      while (true) {
-        const size_t idx = index.fetch_add(1);
-        if (idx >= files.size()) break;
-        PluginApi parsed = parse_plugin(files[idx], repo_root, msgid_index);
-        if (parsed.plugin.empty()) continue;
-        std::lock_guard<std::mutex> lk(out_mtx);
-        out.push_back(std::move(parsed));
-      }
+        while (true) {
+          const size_t idx = index.fetch_add(1);
+          if (idx >= files.size()) {break;}
+          PluginApi parsed = parse_plugin(files[idx], repo_root, msgid_index);
+          if (parsed.plugin.empty()) {continue;}
+          std::lock_guard<std::mutex> lk(out_mtx);
+          out.push_back(std::move(parsed));
+        }
     });
   }
-  for (auto & t : workers) t.join();
+  for (auto & t : workers) {
+    t.join();
+  }
 
   std::sort(out.begin(), out.end(), [](const auto & a, const auto & b) {
-    return a.plugin < b.plugin;
+      return a.plugin < b.plugin;
   });
 
   fs::create_directories(cfg.output.parent_path());

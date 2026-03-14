@@ -639,7 +639,7 @@ private:
       // Issue #276
       bool it_is_first_requested = false;
       if (!parameters_missing_idx.empty()) {
-          it_is_first_requested = (parameters_missing_idx.front() == pmsg.param_index);
+        it_is_first_requested = (parameters_missing_idx.front() == pmsg.param_index);
       }
 
       // remove idx for that message
