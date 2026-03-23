@@ -5,6 +5,7 @@ project(mavros_extras)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  ai_msgs
   geometry_msgs
   mavros
   mavros_msgs
@@ -52,7 +53,7 @@ include(MavrosMavlink)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-  CATKIN_DEPENDS geometry_msgs mavros mavros_msgs roscpp sensor_msgs std_msgs visualization_msgs
+  CATKIN_DEPENDS ai_msgs geometry_msgs mavros mavros_msgs roscpp sensor_msgs std_msgs visualization_msgs
   DEPENDS Boost
 )
 
@@ -68,6 +69,7 @@ include_directories(
 
 add_library(mavros_extras
   src/plugins/adsb.cpp
+  src/plugins/ai_imu_noise_plugin.cpp
   src/plugins/cam_imu_sync.cpp
   src/plugins/camera.cpp
   src/plugins/cellular_status.cpp

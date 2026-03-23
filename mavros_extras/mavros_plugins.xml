@@ -96,4 +96,7 @@
   <class name="guided_target" type="mavros::extra_plugins::GuidedTargetPlugin" base_class_type="mavros::plugin::PluginBase">
      <description>Send guided target.</description>
 </class>
+  <class name="ai_imu_noise" type="mavros::std_plugins::AiImuNoisePlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Send AI IMU noise data to FCU</description>
+  </class>
 </library>
