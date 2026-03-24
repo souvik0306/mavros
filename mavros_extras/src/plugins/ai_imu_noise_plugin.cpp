@@ -82,7 +82,7 @@ private:
 		fcu_link->send_message_ignore_drop(&mav_msg);
 
 		ROS_INFO_THROTTLE(1.0,
-			"[AiImuNoisePlugin] Sent MAVLink msg accel[%.3f %.3f %.3f]",
+			"[AiImuNoisePlugin] Sent MAVLink msg accel[%.3e %.3e %.3e]",
 			payload[0], payload[1], payload[2]
 		);
 	}
