@@ -9,17 +9,24 @@ namespace std_plugins {
 class AiImuNoisePlugin : public plugin::PluginBase
 {
 public:
-	AiImuNoisePlugin() : PluginBase(), nh("~") {}
+	AiImuNoisePlugin() : PluginBase() {}
 
 	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
-		noise_imu_sub = nh.subscribe(
-			"/ai/imu_noise",
+		// GLOBAL node handle (IMPORTANT)
+		ros::NodeHandle nh;
+
+		// Subscribe to your ROS topic
+		noise_sub_ = nh.subscribe(
+			"/mavros/ai/imu_noise",
 			10,
 			&AiImuNoisePlugin::noise_cb,
-			this);
+			this
+		);
+
+		ROS_INFO("[AiImuNoisePlugin] Initialized and subscribed to /mavros/ai/imu_noise");
 	}
 
 	Subscriptions get_subscriptions() override {
@@ -27,18 +34,27 @@ public:
 	}
 
 private:
-	ros::NodeHandle nh;
-	ros::Subscriber noise_imu_sub;
+	ros::Subscriber noise_sub_;
 
 	void noise_cb(const ai_msgs::ImuNoise::ConstPtr& msg)
 	{
-		static constexpr uint32_t AI_IMU_NOISE_MSG_ID = 50001;
-		static constexpr uint8_t AI_IMU_NOISE_LEN = 24;
-		static constexpr uint8_t AI_IMU_NOISE_CRC = 11;
+		ROS_INFO_THROTTLE(1.0, "[AiImuNoisePlugin] Received AI IMU noise");
 
-		mavlink::mavlink_message_t mav_msg {};
 		auto fcu_link = UAS_FCU(m_uas);
-		const float payload[] = {
+
+		if (!fcu_link) {
+			ROS_WARN("[AiImuNoisePlugin] FCU link not ready");
+			return;
+		}
+
+		// MAVLink message parameters (must match your XML exactly)
+		static constexpr uint32_t MSG_ID = 50001;
+		static constexpr uint8_t MSG_LEN = 24;   // 6 floats
+		static constexpr uint8_t MSG_CRC = 11;   // MUST match XML
+
+		mavlink::mavlink_message_t mav_msg{};
+
+		float payload[6] = {
 			static_cast<float>(msg->accel_noise[0]),
 			static_cast<float>(msg->accel_noise[1]),
 			static_cast<float>(msg->accel_noise[2]),
@@ -47,17 +63,28 @@ private:
 			static_cast<float>(msg->gyro_noise[2])
 		};
 
-		memcpy(_MAV_PAYLOAD_NON_CONST(&mav_msg), payload, AI_IMU_NOISE_LEN);
-		mav_msg.msgid = AI_IMU_NOISE_MSG_ID;
+		// Copy payload
+		memcpy(_MAV_PAYLOAD_NON_CONST(&mav_msg), payload, MSG_LEN);
+
+		mav_msg.msgid = MSG_ID;
+
+		// Finalize MAVLink message
 		mavlink::mavlink_finalize_message(
 			&mav_msg,
 			fcu_link->get_system_id(),
 			fcu_link->get_component_id(),
-			AI_IMU_NOISE_LEN,
-			AI_IMU_NOISE_LEN,
-			AI_IMU_NOISE_CRC);
+			MSG_LEN,
+			MSG_LEN,
+			MSG_CRC
+		);
 
+		// Send to PX4
 		fcu_link->send_message_ignore_drop(&mav_msg);
+
+		ROS_INFO_THROTTLE(1.0,
+			"[AiImuNoisePlugin] Sent MAVLink msg accel[%.3f %.3f %.3f]",
+			payload[0], payload[1], payload[2]
+		);
 	}
 };
 
@@ -65,4 +92,8 @@ private:
 }  // namespace mavros
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::AiImuNoisePlugin, mavros::plugin::PluginBase)
+PLUGINLIB_EXPORT_CLASS(
+	mavros::std_plugins::AiImuNoisePlugin,
+
+	mavros::plugin::PluginBase
+)
